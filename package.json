@@ -5,10 +5,8 @@
   "scripts": {
     "dev": "pnpm --filter @mindweft/web dev",
     "build": "turbo run build",
-    "test": "turbo run lint typecheck test e2e",
-    "lint": "turbo run lint",
+    "test": "prettier --check . && turbo run lint typecheck test e2e",
     "lint:fix": "turbo run lint -- --fix",
-    "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "typecheck": "turbo run typecheck",
     "prepare": "husky"

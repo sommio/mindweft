@@ -13,10 +13,12 @@
     "@mindweft/config": "workspace:*",
     "@mindweft/db": "workspace:*",
     "@serwist/next": "^9.5.11",
+    "better-sqlite3": "^12.11.1",
     "next": "^16.2.10",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "serwist": "^9.5.11"
+    "serwist": "^9.5.11",
+    "sqlite-vec": "^0.1.9"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import path from 'node:path';
 import withSerwistInit from '@serwist/next';
 
 const withSerwist = withSerwistInit({
@@ -9,6 +10,7 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../..'),
   serverExternalPackages: ['better-sqlite3', 'sqlite-vec'],
 };
 

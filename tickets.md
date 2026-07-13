@@ -32,7 +32,7 @@ agent 友好 / harness 原则见 `CONTEXT.md`「Agent 友好代码库」节。
 **为何：** 排 native 二进制在 Node 跑通的雷——scaffold 最大基建隐患。
 
 ## T3 — PWA 壳 + 测试骨架 + pre-commit（单 `pnpm test` 信号成型）
-**状态：** 未开始
+**状态：** 已完成
 **blocking edges：** T1
 **做：**
 - `@serwist/next`：`app/sw.ts`、manifest、可安装；`next.config` `withSerwist` + standalone 兼容
@@ -63,7 +63,7 @@ agent 友好 / harness 原则见 `CONTEXT.md`「Agent 友好代码库」节。
 ---
 
 ## Frontier（当前可做）
-**T3**
+暂无。
 
 ## Defer 到功能迭代（不在 M1）
 AI/聊天（AI SDK）、记忆系统（embedding/BM25/图谱/遗忘/cron 维护）、web push、扩展（读书器/五子棋/信件/倒计时/daily/表情包/MCP）、auth（聊天迭代加）、包边界强制规则（eslint-plugin-boundaries，首个功能起加）。

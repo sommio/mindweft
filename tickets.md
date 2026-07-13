@@ -9,7 +9,7 @@ agent 友好 / harness 原则见 `CONTEXT.md`「Agent 友好代码库」节。
 ---
 
 ## T1 — monorepo + Next.js standalone 骨架 + strict 工具链 + harness 文档
-**状态：** 未开始
+**状态：** 已完成
 **blocking edges：** 无（地基）
 **做：**
 - pnpm workspaces + Turborepo：`apps/web`、`packages/config`

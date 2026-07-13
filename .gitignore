@@ -1,1 +1,11 @@
 .DS_Store
+.next
+node_modules
+.turbo
+dist
+.env*
+*.db
+*.sqlite
+coverage
+playwright-report
+test-results

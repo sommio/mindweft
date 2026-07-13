@@ -38,3 +38,7 @@ TypeScript、pnpm workspaces、Turborepo、Next.js App Router、SQLite/Drizzle�
 - 在约定 seam 使用 TDD。
 - 运行 `pnpm test`；格式问题使用 `pnpm format:fix`，lint 问题使用 `pnpm lint:fix`。`pnpm test` 统一执行 format、lint、typecheck、unit test 和 E2E。
 - 保持 scaffold 最小化，不提前实现 deferred 功能。
+
+## Git 安全
+
+- 禁止使用 `git commit --no-verify`、`git push --no-verify` 或其他方式绕过 Git hook。Hook 失败时必须修复原因，或报告阻塞并停止提交。

@@ -22,7 +22,7 @@ agent 友好 / harness 原则见 `CONTEXT.md`「Agent 友好代码库」节。
 **完成定义：** `pnpm dev` 起占位页；`pnpm build` 绿；`pnpm test` 跑通 lint+typecheck（unit/e2e 待 T3 接 runner）；turbo cache 工作。
 
 ## T2 — DB 层：Drizzle + better-sqlite3 + sqlite-vec（de-risk native 二进制）
-**状态：** 未开始
+**状态：** 已完成
 **blocking edges：** T1
 **做：**
 - `packages/db`：Drizzle schema（一条 trivial 表），better-sqlite3 `Database`，`sqliteVec.load(db)`，drizzle-kit migration
@@ -63,7 +63,7 @@ agent 友好 / harness 原则见 `CONTEXT.md`「Agent 友好代码库」节。
 ---
 
 ## Frontier（当前可做）
-**T1**
+**T3**
 
 ## Defer 到功能迭代（不在 M1）
 AI/聊天（AI SDK）、记忆系统（embedding/BM25/图谱/遗忘/cron 维护）、web push、扩展（读书器/五子棋/信件/倒计时/daily/表情包/MCP）、auth（聊天迭代加）、包边界强制规则（eslint-plugin-boundaries，首个功能起加）。

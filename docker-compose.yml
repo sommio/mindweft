@@ -1,0 +1,26 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    image: mindweft-web:local
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: /data/mindweft.db
+    volumes:
+      - mindweft-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - 'fetch("http://127.0.0.1:3000/api/health").then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))'
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mindweft-data: {}

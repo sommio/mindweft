@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  test:
+    name: lint + typecheck + unit + e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browsers
+        run: pnpm --filter @mindweft/web exec playwright install --with-deps chromium
+      - run: pnpm test
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
+
+  docker-build:
+    name: build (${{ matrix.suffix }})
+    needs: test
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            suffix: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            suffix: arm64
+    steps:
+      - uses: actions/checkout@v4
+      - id: repo
+        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+      - id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: ${{ github.event_name == 'push' && github.ref_name == 'develop' }}
+          tags: ghcr.io/${{ steps.repo.outputs.name }}:sha-${{ steps.sha.outputs.short }}-${{ matrix.suffix }}
+          provenance: false
+          cache-from: type=gha,scope=docker-${{ matrix.suffix }}
+          cache-to: type=gha,mode=max,scope=docker-${{ matrix.suffix }}
+
+  manifest:
+    name: manifest (latest + sha)
+    needs: docker-build
+    if: ${{ github.event_name == 'push' && github.ref_name == 'develop' }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: repo
+        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+      - id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Merge multi-arch manifest
+        env:
+          IMG: ghcr.io/${{ steps.repo.outputs.name }}
+          SHA: ${{ steps.sha.outputs.short }}
+        run: |
+          docker buildx imagetools create \
+            -t "$IMG:latest" \
+            -t "$IMG:sha-$SHA" \
+            "$IMG:sha-$SHA-amd64" \
+            "$IMG:sha-$SHA-arm64"
+          docker buildx imagetools inspect "$IMG:latest"

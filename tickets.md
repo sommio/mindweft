@@ -42,7 +42,7 @@ agent 友好 / harness 原则见 `CONTEXT.md`「Agent 友好代码库」节。
 **完成定义：** 构建绿 + SW 注册 + 可安装；`pnpm test` 全绿；pre-commit 拦住 format/lint 错。
 
 ## T4 — Dockerfile + docker-compose（boots green，native 二进制 in image）
-**状态：** 未开始
+**状态：** 已完成
 **blocking edges：** T1、T2
 **做：**
 - `apps/web/Dockerfile`：多阶段 standalone（参考 vercel/next.js examples/with-docker），处理 better-sqlite3 + @node-rs/jieba 预编译二进制，`outputFileTracingRoot` = monorepo root
@@ -51,7 +51,7 @@ agent 友好 / harness 原则见 `CONTEXT.md`「Agent 友好代码库」节。
 **完成定义：** `docker compose up` 起 + health query 通。
 
 ## T5 — GitHub Actions CI/CD 全流水线 + pull-based deploy
-**状态：** 未开始
+**状态：** 已完成
 **blocking edges：** T1、T2、T3、T4
 **做：**
 - `.github/workflows/ci.yml`（public repo 免费）：**CI 跑全量 `pnpm test`**（lint+typecheck+unit+e2e）+ build(docker) + push image to GHCR（自动 `GITHUB_TOKEN`，public 镜像无需 secret）。CI = 不可跳过的最终门。

@@ -1,0 +1,40 @@
+# 依赖与构建产物
+node_modules
+**/node_modules
+.next
+**/.next
+.turbo
+**/.turbo
+dist
+**/dist
+coverage
+**/coverage
+playwright-report
+**/playwright-report
+test-results
+**/test-results
+
+# Git / 元数据
+.git
+.gitignore
+**/.git
+**/.gitignore
+.DS_Store
+**/.DS_Store
+
+# 环境与本地数据
+.env*
+**/.env*
+*.db
+*.sqlite
+**/*.db
+**/*.sqlite
+
+# Serwist 构建产物（next build 重新生成）
+apps/web/public/sw.js
+
+# 编辑器 / CI 缓存
+.idea
+.vscode
+**/.idea
+**/.vscode

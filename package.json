@@ -10,9 +10,11 @@
     "lint:fix": "turbo run lint -- --fix",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "turbo": "^2.10.4"
   }

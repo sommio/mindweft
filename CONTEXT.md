@@ -20,10 +20,10 @@ mindweft 是自托管私人 AI 陪伴前端：AI 对话 + 记忆系统 + 扩展�
 
 参考 https://martinfowler.com/articles/harness-engineering.html + https://dev.to/tacoda 系列（13 部）。原则：**Constrain, verify, scope, automate**——每类会犯的错配一个机器可查的约束，给 agent 一个命令验证。
 
-- **单 `pnpm test` 信号**：一条命令 = lint + typecheck + unit(vitest) + e2e(playwright)。agent 唯一确定性反馈。配对 fix 脚本（`pnpm lint:fix` / `pnpm format:fix`），错误信息指向 fix 命令（positive prompt injection）。
+- **单 `pnpm test` 信号**：一条命令 = format + lint + typecheck + unit(vitest) + e2e(playwright)。agent 唯一确定性反馈。配对 fix 脚本（`pnpm lint:fix` / `pnpm format:fix`），错误信息指向 fix 命令（positive prompt injection）。
 - **strict 类型**：tsconfig `strict` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` + `noUnusedLocals/Parameters` 等。TypeScript = 计算传感器，缩 agent 错误空间。
 - **strict lint**：ESLint 9 flat + `@typescript-eslint` strict + next + 包边界；Prettier。机器可查，agent 自验。
-- **pre-commit 快子集**：只 prettier + eslint（秒级）；tsc/test/build 归 CI。hook 拦 + 指向 fix。
+- **pre-commit 统一门**：调用 `pnpm test`，执行 format + lint + typecheck + unit + e2e。hook 拦截任一失败。
 - **CI 全量门**：CI 跑全量 `pnpm test` + build + push，不可跳过。本地 docker 过 = CI 过。
 - **清晰 seam**：`packages/{db,memory,ai,cron,push,config}` 各一职责；架构显式且无聊；契约先于实现。
 - **harness 文档**：根 `AGENTS.md`（概览 + harness 表【area→guidance file】+ 工作流 + TDD）+ 每包 `AGENTS.md`（5 段：what / design-direction / patterns / rules / not-to-do），按目录懒加载；`CLAUDE.md` 软链 → `AGENTS.md`（Claude Code 读 CLAUDE.md，AGENTS.md 当通用 agent 标准 source of truth）。

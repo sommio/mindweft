@@ -16,7 +16,7 @@ agent 友好 / harness 原则见 `CONTEXT.md`「Agent 友好代码库」节。
 - `apps/web`：Next.js 16 App Router，`output:'standalone'`，占位首页
 - `turbo.json`：`lint`/`typecheck`/`test`/`build`/`e2e` 任务，`dependsOn` + `inputs/outputs` + cache
 - **`packages/config`**：strict `tsconfig.base.json`（`strict`、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`noImplicitOverride`、`noUnusedLocals/Parameters`、`verbatimModuleSyntax`）；ESLint 9 flat config（`@typescript-eslint` strict type-checked + next + 包边界）；Prettier
-- **根 `package.json` 单 `pnpm test` 入口** = `turbo run lint typecheck test e2e`（agent 唯一确定性信号）；配对 fix 脚本 `pnpm lint:fix` / `pnpm format:fix`（错误信息指向 fix 命令 = positive prompt injection）
+- **根 `package.json` 单 `pnpm test` 入口** = `prettier --check . && turbo run lint typecheck test e2e`（agent 唯一确定性信号）；不提供单独的 lint/format 检查脚本；保留配对 fix 脚本 `pnpm lint:fix` / `pnpm format:fix`（错误信息指向 fix 命令 = positive prompt injection）
 - **`.gitignore`**：node_modules、.next、.turbo、dist、.env*、*.db、*.sqlite、coverage、playwright-report、test-results、.DS_Store
 - **harness 文档**：根 `AGENTS.md`（项目概览 + 技术栈 + harness 表【area→guidance file】+ `pnpm test` 工作流 + TDD）+ `apps/web/AGENTS.md`、`packages/config/AGENTS.md`（5 段式：what / design-direction / patterns / rules / not-to-do）；`CLAUDE.md` 软链 → `AGENTS.md`（Claude Code 读 CLAUDE.md，AGENTS.md 当通用 agent 标准 source of truth）
 **完成定义：** `pnpm dev` 起占位页；`pnpm build` 绿；`pnpm test` 跑通 lint+typecheck（unit/e2e 待 T3 接 runner）；turbo cache 工作。
@@ -37,8 +37,8 @@ agent 友好 / harness 原则见 `CONTEXT.md`「Agent 友好代码库」节。
 **做：**
 - `@serwist/next`：`app/sw.ts`、manifest、可安装；`next.config` `withSerwist` + standalone 兼容
 - Vitest config + 一条 trivial unit；Playwright config + 一条 trivial E2E（页加载）
-- **pre-commit hook**（用 `setup-pre-commit` skill）：只跑快子集 = `pnpm format` + `pnpm lint`（prettier --check + eslint）；不跑 tsc/test/build（归 CI）。hook 失败信息指向 `pnpm lint:fix`/`pnpm format:fix`
-- **`pnpm test` 信号成型** = lint + typecheck + unit(vitest) + e2e(playwright) 一条命令全过
+- **pre-commit hook**：调用统一 `pnpm test`；format、lint、typecheck、unit(vitest)、E2E 全部通过才允许提交。失败时使用 `pnpm lint:fix` / `pnpm format:fix`
+- **`pnpm test` 信号成型** = format + lint + typecheck + unit(vitest) + e2e(playwright) 一条命令全过
 **完成定义：** 构建绿 + SW 注册 + 可安装；`pnpm test` 全绿；pre-commit 拦住 format/lint 错。
 
 ## T4 — Dockerfile + docker-compose（boots green，native 二进制 in image）

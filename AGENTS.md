@@ -36,5 +36,5 @@ TypeScript、pnpm workspaces、Turborepo、Next.js App Router、SQLite/Drizzle�
 
 - 编辑前阅读 ticket、上下文和对应目录指引。
 - 在约定 seam 使用 TDD。
-- 运行 `pnpm test`；格式问题使用 `pnpm format:fix`，lint 问题使用 `pnpm lint:fix`。
+- 运行 `pnpm test`；格式问题使用 `pnpm format:fix`，lint 问题使用 `pnpm lint:fix`。`pnpm test` 统一执行 format、lint、typecheck、unit test 和 E2E。
 - 保持 scaffold 最小化，不提前实现 deferred 功能。

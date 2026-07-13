@@ -7,6 +7,7 @@ export default [
       'node_modules/**',
       'dist/**',
       '.turbo/**',
+      '**/public/sw.js',
       '**/*.mjs',
     ],
   },

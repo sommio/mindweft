@@ -5,7 +5,8 @@ import { createRequire } from 'node:module';
 import { dirname } from 'node:path';
 
 const require = createRequire(import.meta.url);
-const sqliteVec = require('sqlite-vec') as unknown as typeof import('sqlite-vec');
+const sqliteVec =
+  require('sqlite-vec') as unknown as typeof import('sqlite-vec');
 
 const databasePath = process.env.DATABASE_URL ?? './data/mindweft.db';
 mkdirSync(dirname(databasePath), { recursive: true });

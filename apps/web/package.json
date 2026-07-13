@@ -2,27 +2,34 @@
   "name": "@mindweft/web",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "echo 'No unit tests yet'",
-    "e2e": "echo 'No e2e tests yet'"
+    "test": "vitest run",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@mindweft/config": "workspace:*",
     "@mindweft/db": "workspace:*",
+    "@serwist/next": "^9.5.11",
     "next": "^16.2.10",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "serwist": "^9.5.11"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^24.10.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",
+    "@vitejs/plugin-react": "^6.0.3",
     "eslint": "^9.39.0",
-    "typescript": "^5.9.3"
+    "jsdom": "^29.1.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
   }
 }

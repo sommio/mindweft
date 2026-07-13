@@ -1,0 +1,22 @@
+# Agent and project documentation
+.agents/**
+.claude/**
+docs/**
+**/AGENTS.md
+**/next-env.d.ts
+AGENTS.md
+CONTEXT.md
+tickets.md
+skills-lock.json
+
+# Lockfiles and generated/local artifacts
+pnpm-lock.yaml
+node_modules/**
+.next/**
+.turbo/**
+dist/**
+coverage/**
+playwright-report/**
+test-results/**
+*.db
+*.sqlite

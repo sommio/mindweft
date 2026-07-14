@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { ChatShell } from './components/ChatShell';
 import { useProviderConfig } from '../../lib/use-provider-config';
 
 export default function ChatPage() {
@@ -27,16 +28,5 @@ export default function ChatPage() {
     );
   }
 
-  return (
-    <main>
-      <section>
-        <h1>聊天</h1>
-        <p>
-          已连接 Provider，Model 为 <strong>{config.model}</strong>
-          。聊天即将就绪。
-        </p>
-        <Link href="/settings/provider">编辑 Provider</Link>
-      </section>
-    </main>
-  );
+  return <ChatShell config={config} />;
 }

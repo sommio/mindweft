@@ -18,4 +18,4 @@ Route handler 放在对应 route segment 旁边。显式导出 metadata 与类�
 
 ## Not to do
 
-T1 不添加 auth、聊天、PWA 或 database 代码。
+T1 不添加 auth 或 database 代码；聊天与 PWA 已进入 M1 后续 ticket 范围。

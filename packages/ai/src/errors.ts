@@ -48,7 +48,14 @@ function isNetworkError(error: unknown): boolean {
   const message = asString(error['message']);
   if (name === 'TypeError' && /fetch/i.test(message)) return true;
   if (name === 'APIConnectionError') return true;
-  if (/ECONNREFUSED|ENOTFOUND|ECONNRESET|EAI_AGAIN/.test(message)) return true;
+  // AI SDK 把连接级失败包成 AI_APICallError，message 以 "Cannot connect to API" 开头。
+  if (/cannot connect to api/i.test(message)) return true;
+  if (
+    /ECONNREFUSED|ENOTFOUND|ECONNRESET|EAI_AGAIN|other side closed/i.test(
+      message,
+    )
+  )
+    return true;
   return false;
 }
 

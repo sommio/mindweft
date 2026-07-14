@@ -12,9 +12,10 @@ const MAX_ROWS = 5;
 export type ComposerProps = {
   streaming: boolean;
   onSend: (text: string) => void;
+  onStop: () => void;
 };
 
-export function Composer({ streaming, onSend }: ComposerProps) {
+export function Composer({ streaming, onSend, onStop }: ComposerProps) {
   const [value, setValue] = useState('');
   const isMobile = useIsMobile();
   const platform = isMobile ? 'mobile' : 'desktop';
@@ -54,15 +55,26 @@ export function Composer({ streaming, onSend }: ComposerProps) {
           aria-label="消息输入"
           disabled={streaming}
         />
-        <button
-          type="button"
-          className={styles.sendButton}
-          onClick={submit}
-          disabled={!canSend}
-          aria-label="发送"
-        >
-          发送
-        </button>
+        {streaming ? (
+          <button
+            type="button"
+            className={styles.stopButton}
+            onClick={onStop}
+            aria-label="停止"
+          >
+            停止
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={styles.sendButton}
+            onClick={submit}
+            disabled={!canSend}
+            aria-label="发送"
+          >
+            发送
+          </button>
+        )}
       </div>
     </div>
   );

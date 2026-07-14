@@ -18,7 +18,7 @@ export type ChatShellProps = {
 };
 
 export function ChatShell({ config }: ChatShellProps) {
-  const { messages, streaming, send } = useChatSession(config);
+  const { messages, streaming, send, stop } = useChatSession(config);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
@@ -33,7 +33,7 @@ export function ChatShell({ config }: ChatShellProps) {
           }}
         />
         <MessageList messages={messages} />
-        <Composer streaming={streaming} onSend={send} />
+        <Composer streaming={streaming} onSend={send} onStop={stop} />
       </main>
       <ConversationDrawer
         open={drawerOpen}

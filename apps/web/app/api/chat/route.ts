@@ -1,6 +1,12 @@
-import { classifyAiError, streamChat } from '@mindweft/ai';
+import { classifyAiError, type ChatMessage, streamChat } from '@mindweft/ai';
 
 import { parseChatRequest } from './parse-chat-request';
+import { ensureDefaultConversation } from '../../chat/store/conversations';
+import {
+  insertAssistantMessage,
+  insertUserMessage,
+  listMessages,
+} from '../../chat/store/messages';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,11 +42,19 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  // 绑定唯一默认对话：先持久化用户消息，再读取有序历史作为 Provider 上下文。
+  const conversation = ensureDefaultConversation();
+  insertUserMessage(conversation.id, parsed.content);
+  const history: ChatMessage[] = listMessages(conversation.id).map((m) => ({
+    role: m.role,
+    content: m.content,
+  }));
+
   let stream;
   try {
     stream = streamChat({
       config: parsed.provider,
-      messages: parsed.messages,
+      messages: history,
       signal: request.signal,
     });
   } catch (error) {
@@ -51,18 +65,26 @@ export async function POST(request: Request): Promise<Response> {
   const encoder = new TextEncoder();
   const bodyStream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      let assistantText = '';
       try {
         for await (const delta of stream.textStream) {
+          assistantText += delta;
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`),
           );
         }
-        // API 错误（401/500 等）不抛入 textStream；从 error 取捕获的原始错误。
         const streamError = await stream.error;
-        if (streamError === undefined) {
+        if (streamError === undefined && assistantText.trim() !== '') {
+          // 流正常结束且有内容：持久化完整 assistant 消息，再发 [DONE]。
+          insertAssistantMessage(conversation.id, assistantText);
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         } else {
-          const category = classifyAiError(streamError);
+          // 异常路径：Provider 错误、用户中断、或流结束但无内容（schema 拒空内容）。
+          // 一律不持久化部分 assistant 内容，发安全 error 事件（用户中断静默）。
+          const category =
+            streamError === undefined
+              ? 'server_failed'
+              : classifyAiError(streamError);
           if (category !== 'stream_aborted') {
             controller.enqueue(
               encoder.encode(
@@ -73,7 +95,7 @@ export async function POST(request: Request): Promise<Response> {
         }
       } catch (error) {
         const category = classifyAiError(error);
-        // 用户中断或客户端断开：静默关闭，不发 error 事件。
+        // 用户中断或客户端断开：静默关闭，不发 error 事件，不持久化。
         if (category !== 'stream_aborted') {
           controller.enqueue(
             encoder.encode(

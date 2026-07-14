@@ -70,6 +70,16 @@ export async function postStream(
         }
       }
     }
+    // 流结束：flush 残余缓冲，避免漏掉终止 error/done 事件。
+    const { events: finalEvents } = parseSseEvents(buffer, true);
+    for (const event of finalEvents) {
+      if (event.type === 'delta') {
+        callbacks.onDelta(event.delta);
+      } else if (event.type === 'error') {
+        callbacks.onError(event.code);
+        return;
+      }
+    }
     callbacks.onDone();
   } catch {
     if (signal?.aborted) return;

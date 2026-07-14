@@ -37,6 +37,9 @@ ENV PORT=3000
 # 会只绑到容器名 IPv6 导致 3000 不可达。显式设 0.0.0.0（Docker 不覆盖 image 已声明的 HOSTNAME）。
 ENV HOSTNAME=0.0.0.0
 ENV DATABASE_URL=/data/mindweft.db
+# Drizzle 迁移目录：client.ts 在 standalone 中无法用 import.meta.url 定位源码目录，
+# 显式复制迁移文件并指向 /app/drizzle，让 instrumentation/客户端启动时自动迁移。
+ENV DRIZZLE_MIGRATIONS_FOLDER=/app/drizzle
 RUN groupadd --system --gid 1001 nodejs \
   && useradd --system --uid 1001 --gid nodejs --home-dir /app nextjs \
   && mkdir -p /data \
@@ -44,6 +47,7 @@ RUN groupadd --system --gid 1001 nodejs \
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+COPY --from=builder --chown=nextjs:nodejs /app/packages/db/drizzle ./drizzle
 # sqlite-vec 原生扩展（vec0.so）在 optionalDependencies 平台子包 sqlite-vec-linux-<arch> 内；
 # index.cjs 运行时 require.resolve("sqlite-vec-linux-<arch>/vec0.so")，从 .pnpm/sqlite-vec@.../node_modules/sqlite-vec/index.cjs
 # 向上查 <ancestor>/node_modules/<pkg>，命中 .pnpm/sqlite-vec@.../node_modules/，但静态 tracing 漏掉平台子包。

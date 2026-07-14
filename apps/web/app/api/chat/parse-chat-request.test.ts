@@ -9,28 +9,16 @@ const validProvider = {
 };
 
 describe('parseChatRequest', () => {
-  it('accepts a valid body with one user message', () => {
+  it('accepts a valid body with non-empty content', () => {
     const result = parseChatRequest({
       provider: validProvider,
-      messages: [{ role: 'user', content: '你好' }],
+      content: '你好',
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.provider).toEqual(validProvider);
-      expect(result.messages).toEqual([{ role: 'user', content: '你好' }]);
+      expect(result.content).toBe('你好');
     }
-  });
-
-  it('accepts user and assistant messages', () => {
-    const result = parseChatRequest({
-      provider: validProvider,
-      messages: [
-        { role: 'user', content: 'hi' },
-        { role: 'assistant', content: 'hello' },
-        { role: 'user', content: 'again' },
-      ],
-    });
-    expect(result.ok).toBe(true);
   });
 
   it('rejects non-object body with invalid_body_shape', () => {
@@ -49,16 +37,14 @@ describe('parseChatRequest', () => {
   });
 
   it('rejects missing provider with provider_invalid', () => {
-    const result = parseChatRequest({
-      messages: [{ role: 'user', content: 'hi' }],
-    });
+    const result = parseChatRequest({ content: 'hi' });
     expect(result).toEqual({ ok: false, code: 'provider_invalid' });
   });
 
   it('rejects invalid provider config with provider_invalid and safe error codes', () => {
     const result = parseChatRequest({
       provider: { baseUrl: 'not-a-url', apiKey: '', model: '' },
-      messages: [{ role: 'user', content: 'hi' }],
+      content: 'hi',
     });
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -71,60 +57,33 @@ describe('parseChatRequest', () => {
     }
   });
 
-  it('rejects missing messages with messages_missing', () => {
+  it('rejects missing content with message_invalid', () => {
     const result = parseChatRequest({ provider: validProvider });
-    expect(result).toEqual({ ok: false, code: 'messages_missing' });
+    expect(result).toEqual({ ok: false, code: 'message_invalid' });
   });
 
-  it('rejects non-array messages with messages_missing', () => {
+  it('rejects non-string content with message_invalid', () => {
     const result = parseChatRequest({
       provider: validProvider,
-      messages: 'nope',
-    });
-    expect(result).toEqual({ ok: false, code: 'messages_missing' });
-  });
-
-  it('rejects empty messages array with messages_empty', () => {
-    const result = parseChatRequest({ provider: validProvider, messages: [] });
-    expect(result).toEqual({ ok: false, code: 'messages_empty' });
-  });
-
-  it('rejects message with empty/whitespace content with message_invalid', () => {
-    const result = parseChatRequest({
-      provider: validProvider,
-      messages: [{ role: 'user', content: '   ' }],
+      content: { role: 'user' },
     });
     expect(result).toEqual({ ok: false, code: 'message_invalid' });
   });
 
-  it('rejects message with unknown role with message_invalid', () => {
-    const result = parseChatRequest({
-      provider: validProvider,
-      messages: [{ role: 'tool', content: 'hi' }],
+  it('rejects empty/whitespace content with message_invalid', () => {
+    expect(
+      parseChatRequest({ provider: validProvider, content: '   ' }),
+    ).toEqual({ ok: false, code: 'message_invalid' });
+    expect(parseChatRequest({ provider: validProvider, content: '' })).toEqual({
+      ok: false,
+      code: 'message_invalid',
     });
-    expect(result).toEqual({ ok: false, code: 'message_invalid' });
-  });
-
-  it('rejects system role (first version only has user and assistant)', () => {
-    const result = parseChatRequest({
-      provider: validProvider,
-      messages: [{ role: 'system', content: 'hi' }],
-    });
-    expect(result).toEqual({ ok: false, code: 'message_invalid' });
-  });
-
-  it('rejects message that is not an object with message_invalid', () => {
-    const result = parseChatRequest({
-      provider: validProvider,
-      messages: ['nope'],
-    });
-    expect(result).toEqual({ ok: false, code: 'message_invalid' });
   });
 
   it('does not surface apiKey in any error result', () => {
     const failing = parseChatRequest({
       provider: { baseUrl: 'x', apiKey: 'sk-leak-secret', model: 'm' },
-      messages: [{ role: 'user', content: 'hi' }],
+      content: 'hi',
     });
     if (failing.ok) {
       throw new Error('expected failure');

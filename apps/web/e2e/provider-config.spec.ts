@@ -9,6 +9,8 @@ async function gotoSettings(page: import('@playwright/test').Page) {
   await expect(
     page.getByRole('heading', { name: 'Provider 设置' }),
   ).toBeVisible();
+  // 等待客户端水合完成，避免在 React 接管前 fill/click 触发原生表单提交。
+  await page.locator('form[data-mounted="true"]').waitFor();
 }
 
 async function fillValidConfig(page: import('@playwright/test').Page) {

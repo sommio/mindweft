@@ -38,41 +38,38 @@ export function listMessages(conversationId: string): StoredMessage[] {
 }
 
 /**
- * 持久化用户消息。content 由调用方保证非空（schema 与应用层共同保护）。
+ * 持久化一条消息。content 由调用方保证非空（schema 与应用层共同保护）。
  */
-export function insertUserMessage(
+export function insertMessage(
   conversationId: string,
+  role: MessageRole,
   content: string,
 ): StoredMessage {
-  const now = Date.now();
   const row: Message = {
     id: newId(),
     conversationId,
-    role: 'user',
+    role,
     content,
-    createdAt: now,
+    createdAt: Date.now(),
   };
   db.insert(messages).values(row).run();
   return toStored(row);
 }
 
-/**
- * 持久化完整 assistant 消息。仅在流正常结束时调用。
- */
+/** 持久化用户消息（在调用 Provider 前写入）。 */
+export function insertUserMessage(
+  conversationId: string,
+  content: string,
+): StoredMessage {
+  return insertMessage(conversationId, 'user', content);
+}
+
+/** 持久化完整 assistant 消息。仅在流正常结束时调用。 */
 export function insertAssistantMessage(
   conversationId: string,
   content: string,
 ): StoredMessage {
-  const now = Date.now();
-  const row: Message = {
-    id: newId(),
-    conversationId,
-    role: 'assistant',
-    content,
-    createdAt: now,
-  };
-  db.insert(messages).values(row).run();
-  return toStored(row);
+  return insertMessage(conversationId, 'assistant', content);
 }
 
 /**

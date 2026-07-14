@@ -1,4 +1,9 @@
-import { expect, test, type Page } from '@playwright/test';
+import {
+  expect,
+  test,
+  type APIRequestContext,
+  type Page,
+} from '@playwright/test';
 
 const STUB_BASE = 'http://127.0.0.1:8787/v1';
 const API_KEY = 'sk-stub-secret-do-not-leak';
@@ -15,6 +20,11 @@ async function setProviderConfig(page: Page, model: string): Promise<void> {
   );
 }
 
+async function resetDb(request: APIRequestContext): Promise<void> {
+  const res = await request.post('/api/test/reset-db');
+  expect(res.ok()).toBe(true);
+}
+
 async function gotoChat(page: Page, model = 'stub-model'): Promise<void> {
   await setProviderConfig(page, model);
   await page.goto('/chat');
@@ -26,6 +36,16 @@ async function sendByText(page: Page, text: string): Promise<void> {
   await composer.fill(text);
   await composer.press('Enter');
 }
+
+async function waitForStreamDone(page: Page): Promise<void> {
+  // 流式期间输入区 disabled；恢复可用表示流结束并已同步。
+  const composer = page.getByLabel('消息输入');
+  await expect(composer).toBeEnabled();
+}
+
+test.beforeEach(async ({ request }) => {
+  await resetDb(request);
+});
 
 test.describe('chat desktop', () => {
   test('sends a user message and streams an assistant reply', async ({
@@ -39,12 +59,36 @@ test.describe('chat desktop', () => {
     await expect(page.getByRole('log').getByText('你好!')).toBeVisible();
   });
 
-  test('session context carries prior messages', async ({ page }) => {
+  test('session context carries prior messages from the database', async ({
+    page,
+  }) => {
     await gotoChat(page);
     await sendByText(page, 'hi');
     await expect(page.getByRole('log').getByText('第1条')).toBeVisible();
+    await waitForStreamDone(page);
     await sendByText(page, 'again');
     await expect(page.getByRole('log').getByText('第3条')).toBeVisible();
+  });
+
+  test('reload restores user and assistant messages in order', async ({
+    page,
+  }) => {
+    await gotoChat(page);
+    await sendByText(page, '你好');
+    await waitForStreamDone(page);
+    await page.reload();
+    await expect(page.getByRole('heading', { name: '聊天' })).toBeVisible();
+    const log = page.getByRole('log');
+    await expect(log.getByText('你好', { exact: true })).toBeVisible();
+    await expect(log.getByText('你好!')).toBeVisible();
+    // 顺序稳定：user 在 assistant 之前。
+    const userIdx = await log
+      .getByText('你好', { exact: true })
+      .evaluate((el) => el.getBoundingClientRect().top);
+    const assistantIdx = await log
+      .getByText('你好!')
+      .evaluate((el) => el.getBoundingClientRect().top);
+    expect(userIdx).toBeLessThan(assistantIdx);
   });
 
   test('stub 401 shows a safe error and retains the user message', async ({
@@ -68,6 +112,21 @@ test.describe('chat desktop', () => {
     await sendByText(page, 'hi');
     await expect(page.getByRole('alert').getByText('服务端出错')).toBeVisible();
     await expect(page.getByText('boom')).toHaveCount(0);
+  });
+
+  test('provider failure retains the user message after reload', async ({
+    page,
+  }) => {
+    await gotoChat(page, 'error-401');
+    await sendByText(page, 'persist-me');
+    await expect(
+      page.getByRole('alert').getByText('Provider 拒绝了请求'),
+    ).toBeVisible();
+    await page.reload();
+    // 用户消息已持久化；assistant 部分内容不持久化。
+    await expect(
+      page.getByRole('log').getByText('persist-me', { exact: true }),
+    ).toBeVisible();
   });
 
   test('three-pane layout visible and composer within viewport', async ({

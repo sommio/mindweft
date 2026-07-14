@@ -14,6 +14,11 @@ export default defineConfig({
       command: 'pnpm dev',
       url: 'http://127.0.0.1:3000',
       reuseExistingServer: !process.env.CI,
+      timeout: 30_000,
+      env: {
+        DATABASE_URL: './data/e2e.db',
+        MINDWEFT_E2E: '1',
+      },
     },
   ],
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

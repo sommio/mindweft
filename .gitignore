@@ -10,4 +10,5 @@ coverage
 playwright-report
 test-results
 apps/web/public/sw.js
+.playwright-mcp/
 .agents/handoff

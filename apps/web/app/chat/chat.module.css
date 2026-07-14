@@ -81,8 +81,18 @@
   gap: 12px;
   height: 56px;
   padding: 0 18px;
+  padding-top: env(safe-area-inset-top);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   background: #f6f7f4;
+}
+
+.offlineBanner {
+  flex: 0 0 auto;
+  padding: 8px 18px;
+  background: #fff4e0;
+  color: #8a6d3b;
+  border-bottom: 1px solid #f0d9a8;
+  font-size: 13px;
 }
 
 .hamburger {

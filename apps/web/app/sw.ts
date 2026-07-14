@@ -11,14 +11,28 @@ const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   clientsClaim: true,
   skipWaiting: true,
+  navigationPreload: true,
   runtimeCaching: [
+    // 聊天与消息 API：network-only，绝不由 Service Worker 缓存响应。
     {
-      method: 'POST',
       matcher: ({ url }) => url.pathname === '/api/chat',
+      handler: new NetworkOnly(),
+    },
+    {
+      matcher: ({ url }) => url.pathname.startsWith('/api/conversations/'),
       handler: new NetworkOnly(),
     },
     ...defaultCache,
   ],
+  // 导航请求网络失败时回退到预缓存的 /offline 页。
+  fallbacks: {
+    entries: [
+      {
+        url: '/offline',
+        matcher: ({ request }) => request.destination === 'document',
+      },
+    ],
+  },
 });
 
 serwist.addEventListeners();

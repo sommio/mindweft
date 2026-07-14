@@ -1,10 +1,12 @@
-# mindweft — Tickets（local tracker）
+# mindweft — M1 基建历史记录
 
 里程碑 M1：基建空壳，全绿，无功能。禁止搞事——最小 scaffold，不镀金，不加半行业务代码。
 技术栈与决策见 `CONTEXT.md` 与 `docs/research/tech-stack.md`。
 agent 友好 / harness 原则见 `CONTEXT.md`「Agent 友好代码库」节。
 
-每张 ticket 开 fresh session `/implement`，读 ticket + `CONTEXT.md` + research md。绿一张算一张。
+这份文件记录 M1 基建阶段的目标、决策、依赖和完成结果，不是当前任务 tracker。
+
+当前任务使用 GitHub Issues；新功能不要追加到本文件。
 
 ---
 

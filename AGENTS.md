@@ -14,7 +14,7 @@ TypeScript、pnpm workspaces、Turborepo、Next.js App Router、SQLite/Drizzle�
 | --- | --- |
 | Web 应用 | `apps/web/AGENTS.md` |
 | 共享配置 | `packages/config/AGENTS.md` |
-| Tickets 与技术决策 | `tickets.md`、`CONTEXT.md` |
+| 当前任务、历史记录与技术决策 | GitHub Issues、`docs/history/m1-foundation.md`、`CONTEXT.md` |
 
 ## Repository Instructions
 

@@ -1,0 +1,22 @@
+{
+  "name": "@mindweft/ai",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'No unit tests yet'"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^2.0.111",
+    "ai": "^7.0.26"
+  },
+  "devDependencies": {
+    "@mindweft/config": "workspace:*",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3"
+  }
+}

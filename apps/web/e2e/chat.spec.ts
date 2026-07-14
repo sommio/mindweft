@@ -267,6 +267,24 @@ test.describe('chat desktop', () => {
     expect(dom).not.toContain(API_KEY);
     expect(consoleMessages.some((m) => m.includes(API_KEY))).toBe(false);
   });
+
+  test('keyboard tab order reaches rail, composer and send button', async ({
+    page,
+  }) => {
+    await gotoChat(page);
+    // 第一个可聚焦控件是 Rail 聊天链接。
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('link', { name: '聊天' })).toBeFocused();
+    // 顺序 Tab 直到消息输入区获得焦点。
+    const composer = page.getByLabel('消息输入');
+    for (let i = 0; i < 8; i += 1) {
+      if (await composer.evaluate((el) => el === document.activeElement)) break;
+      await page.keyboard.press('Tab');
+    }
+    await expect(composer).toBeFocused();
+    await composer.fill('x');
+    await expect(page.getByRole('button', { name: '发送' })).toBeEnabled();
+  });
 });
 
 test.describe('chat auto-scroll', () => {

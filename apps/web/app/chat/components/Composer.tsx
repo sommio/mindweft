@@ -13,17 +13,18 @@ export type ComposerProps = {
   streaming: boolean;
   onSend: (text: string) => void;
   onStop: () => void;
+  online: boolean;
 };
 
-export function Composer({ streaming, onSend, onStop }: ComposerProps) {
+export function Composer({ streaming, onSend, onStop, online }: ComposerProps) {
   const [value, setValue] = useState('');
   const isMobile = useIsMobile();
   const platform = isMobile ? 'mobile' : 'desktop';
   const rows = computeRows(value, MAX_ROWS);
-  const canSend = value.trim() !== '' && !streaming;
+  const canSend = value.trim() !== '' && !streaming && online;
 
   const submit = () => {
-    if (value.trim() === '' || streaming) return;
+    if (value.trim() === '' || streaming || !online) return;
     onSend(value);
     setValue('');
   };
@@ -51,9 +52,9 @@ export function Composer({ streaming, onSend, onStop }: ComposerProps) {
             setValue(e.target.value);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="输入消息…"
+          placeholder={online ? '输入消息…' : '离线中，发送已禁用'}
           aria-label="消息输入"
-          disabled={streaming}
+          disabled={streaming || !online}
         />
         {streaming ? (
           <button

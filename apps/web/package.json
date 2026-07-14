@@ -7,7 +7,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test && playwright test --config e2e-pwa/playwright.config.ts"
   },
   "dependencies": {
     "@mindweft/ai": "workspace:*",

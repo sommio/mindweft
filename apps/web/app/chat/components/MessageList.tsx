@@ -69,15 +69,19 @@ function MessageRow({ message }: { message: ChatSessionMessage }) {
     message.content === '' && message.status === 'streaming'
       ? '…'
       : message.content;
+  const incomplete = message.status === 'incomplete';
   return (
     <div
       className={cn(
         styles.msg,
         message.role === 'user' ? styles.msgUser : styles.msgAssistant,
+        incomplete && styles.msgIncomplete,
       )}
+      aria-label={incomplete ? '未完成的 AI 消息' : undefined}
     >
       <div className={styles.msgLabel}>{label}</div>
       <span className={styles.msgContent}>{body}</span>
+      {incomplete ? <span className={styles.incompleteTag}>未完成</span> : null}
     </div>
   );
 }

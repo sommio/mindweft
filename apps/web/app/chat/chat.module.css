@@ -166,6 +166,23 @@
   font-size: 13px;
 }
 
+.msgIncomplete {
+  opacity: 0.75;
+  border-style: dashed;
+}
+
+.incompleteTag {
+  display: block;
+  width: fit-content;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #8a6d3b;
+  background: #fff4e0;
+  border: 1px solid #f0d9a8;
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+
 .msgLabel {
   font-size: 11px;
   color: #9aa69e;
@@ -224,6 +241,22 @@
 .sendButton:disabled {
   background: #b9c4bd;
   cursor: not-allowed;
+}
+
+.stopButton {
+  flex: 0 0 auto;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid #b35a4a;
+  border-radius: 12px;
+  background: #fff;
+  color: #b35a4a;
+  font: inherit;
+  cursor: pointer;
+}
+
+.stopButton:hover {
+  background: #fdecea;
 }
 
 .drawer {

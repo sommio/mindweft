@@ -129,6 +129,71 @@ test.describe('chat desktop', () => {
     ).toBeVisible();
   });
 
+  test('stop button aborts the stream and marks the assistant message incomplete', async ({
+    page,
+  }) => {
+    await gotoChat(page, 'stub-slow');
+    await sendByText(page, 'hi');
+    // 等待流式开始出现 AI 文本。
+    await expect(page.getByRole('log').getByText('mw')).toBeVisible();
+    await page.getByRole('button', { name: '停止' }).click();
+    // 部分内容保留并标记未完成。
+    await expect(page.getByText('未完成')).toBeVisible();
+    // Composer 恢复可用（发送按钮回来）。
+    await expect(page.getByRole('button', { name: '发送' })).toBeVisible();
+    await expect(page.getByLabel('消息输入')).toBeEnabled();
+  });
+
+  test('stopped partial assistant content disappears after reload', async ({
+    page,
+  }) => {
+    await gotoChat(page, 'stub-slow');
+    await sendByText(page, 'hi');
+    await expect(page.getByRole('log').getByText('mw')).toBeVisible();
+    await page.getByRole('button', { name: '停止' }).click();
+    await expect(page.getByText('未完成')).toBeVisible();
+    await page.reload();
+    // 用户消息保留；被停止的部分 assistant 内容不持久化、刷新后消失。
+    await expect(
+      page.getByRole('log').getByText('hi', { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText('未完成')).toHaveCount(0);
+    await expect(page.getByText('你好!')).toHaveCount(0);
+  });
+
+  test('composer recovers after an error and can send again', async ({
+    page,
+  }) => {
+    await gotoChat(page, 'error-401');
+    await sendByText(page, 'first');
+    await expect(
+      page.getByRole('alert').getByText('Provider 拒绝了请求'),
+    ).toBeVisible();
+    // Composer 恢复可用后再次发送。
+    await expect(page.getByLabel('消息输入')).toBeEnabled();
+    await sendByText(page, 'second');
+    await expect(
+      page.getByRole('log').getByText('second', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('alert').getByText('Provider 拒绝了请求'),
+    ).toBeVisible();
+  });
+
+  test('network failure shows a safe error and retains the user message', async ({
+    page,
+  }) => {
+    await gotoChat(page, 'error-network');
+    await sendByText(page, 'hi');
+    await expect(
+      page.getByRole('alert').getByText('无法连接 Provider'),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('log').getByText('hi', { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText('ECONNREFUSED')).toHaveCount(0);
+  });
+
   test('three-pane layout visible and composer within viewport', async ({
     page,
   }) => {

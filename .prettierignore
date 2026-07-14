@@ -9,6 +9,9 @@ CONTEXT.md
 tickets.md
 skills-lock.json
 
+# Non-production prototype UI
+apps/web/app/prototype/**
+
 # Lockfiles and generated/local artifacts
 pnpm-lock.yaml
 node_modules/**

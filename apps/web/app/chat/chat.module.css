@@ -178,7 +178,7 @@
 
 .composerWrap {
   flex: 0 0 auto;
-  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  padding: 14px 14px calc(56px + env(safe-area-inset-bottom));
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   background: #f6f7f4;
 }

@@ -45,7 +45,12 @@ export default function ProviderSettingsPage() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>(emptyErrors());
   const [saved, setSaved] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const prefilled = useRef(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!ready || prefilled.current) return;
@@ -93,7 +98,7 @@ export default function ProviderSettingsPage() {
         <Link href="/chat">返回聊天</Link>
       </header>
 
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit} noValidate data-mounted={mounted}>
         <div>
           <label htmlFor="provider-base-url">Base URL</label>
           <input
@@ -171,8 +176,10 @@ export default function ProviderSettingsPage() {
         </div>
 
         <div>
-          <button type="submit">保存</button>
-          <button type="button" onClick={handleClear}>
+          <button type="submit" disabled={!mounted}>
+            保存
+          </button>
+          <button type="button" onClick={handleClear} disabled={!mounted}>
             清除本地配置
           </button>
         </div>

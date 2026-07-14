@@ -15,11 +15,7 @@ const serwist = new Serwist({
   runtimeCaching: [
     // 聊天与消息 API：network-only，绝不由 Service Worker 缓存响应。
     {
-      matcher: ({ url }) => url.pathname === '/api/chat',
-      handler: new NetworkOnly(),
-    },
-    {
-      matcher: ({ url }) => url.pathname.startsWith('/api/conversations/'),
+      matcher: ({ url }) => url.pathname.startsWith('/api/'),
       handler: new NetworkOnly(),
     },
     ...defaultCache,

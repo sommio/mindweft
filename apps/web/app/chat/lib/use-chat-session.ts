@@ -67,6 +67,8 @@ export function useChatSession(config: ProviderConfig): UseChatSession {
   configRef.current = config;
   const assistantIdRef = useRef<string | null>(null);
   const interactedRef = useRef<boolean>(false);
+  // 单调递增的轮次计数：用于丢弃迟到的 onDone refetch，避免覆盖下一轮乐观状态。
+  const turnRef = useRef(0);
 
   // mount 时从服务端加载默认对话的全部有序消息。
   // 若用户在冷启动慢加载完成前已发送消息，则丢弃迟到的初始加载结果，避免覆盖乐观状态/错误行。
@@ -95,6 +97,7 @@ export function useChatSession(config: ProviderConfig): UseChatSession {
     const trimmed = text.trim();
     if (trimmed === '' || abortRef.current !== null) return;
     interactedRef.current = true;
+    turnRef.current += 1;
 
     const userId = newId();
     const assistantId = newId();
@@ -138,8 +141,11 @@ export function useChatSession(config: ProviderConfig): UseChatSession {
           // 从服务端拉取真源，对齐 id/顺序/持久化状态，并清理遗留 incomplete/error 行。
           abortRef.current = null;
           setStreaming(false);
+          const turn = turnRef.current;
           void (async () => {
             const synced = await fetchMessages();
+            // 若期间用户又发送了新消息，丢弃这次迟到的同步，避免覆盖新的乐观状态。
+            if (turnRef.current !== turn) return;
             setMessages(synced);
           })();
         },

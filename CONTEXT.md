@@ -4,8 +4,6 @@
 
 mindweft 是自托管私人 AI 陪伴前端：AI 对话 + 记忆系统 + 扩展，docker compose 一键起，玩家自带 AI 凭证（BYOK）。
 
-练手项目——目标练架构 + 模仿创作者开发方式，为回去做 TextCraft（AI 文字游戏平台）做准备。决策的 why 比 what 重要。
-
 ## 核心不变量
 
 - 自托管，docker compose 部署，不上 serverless

@@ -42,3 +42,17 @@ TypeScript、pnpm workspaces、Turborepo、Next.js App Router、SQLite/Drizzle�
 ## Git 安全
 
 - 禁止使用 `git commit --no-verify`、`git push --no-verify` 或其他方式绕过 Git hook。Hook 失败时必须修复原因，或报告阻塞并停止提交。
+
+## Agent skills
+
+### Issue tracker
+
+Issues 使用 GitHub Issues；外部 PR 也作为 triage 请求来源。详见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+使用默认五组 triage labels：`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix`。详见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+使用 single-context 布局：根目录 `CONTEXT.md`，架构决策放在 `docs/adr/`。详见 `docs/agents/domain.md`。

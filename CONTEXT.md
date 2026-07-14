@@ -4,6 +4,20 @@
 
 mindweft 是自托管私人 AI 陪伴前端：AI 对话 + 记忆系统 + 扩展，docker compose 一键起，玩家自带 AI 凭证（BYOK）。
 
+## Language
+
+**对话（Conversation）**：用户与 AI 之间按时间顺序发生的一组消息。当前聊天迭代只支持一个默认对话。
+_避免_：Session（仅用于实现层标识）、聊天记录（指代不够精确）
+
+**消息（Message）**：对话中的一条用户消息或 AI 消息，包含发送方、内容和时间。
+_避免_：回复（只适用于 AI 消息）
+
+**Provider**：负责生成 AI 消息的外部或自托管模型服务及其连接配置。
+_避免_：模型（模型只是 Provider 提供的能力之一）、网关（当前迭代没有独立网关）
+
+**BYOK 凭证（BYOK Credential）**：由用户提供、用于访问 Provider 的 API Key 及相关连接信息；属于用户私有配置。
+_避免_：服务器 Key、主力 Key（会误导为平台代持凭证）
+
 ## 核心不变量
 
 - 自托管，docker compose 部署，不上 serverless
@@ -12,7 +26,7 @@ mindweft 是自托管私人 AI 陪伴前端：AI 对话 + 记忆系统 + 扩展�
 - monorepo 必须
 - 敏捷迭代；禁止搞事——最小 scaffold，不镀金，功能迭代着加
 - 仓库开源——免费 GitHub Actions + GHCR public 镜像
-- 用户 B 级：少数测试者，简单 auth（auth defer 到聊天迭代）
+- 用户 B 级：少数测试者；当前聊天迭代不实现 auth，由部署者控制实例网络访问边界
 
 ## Agent 友好代码库（harness）
 

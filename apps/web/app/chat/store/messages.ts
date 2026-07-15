@@ -1,4 +1,11 @@
-import { type Message, asc, db, eq, messages } from '@mindweft/db';
+import {
+  conversations,
+  type Message,
+  asc,
+  db,
+  eq,
+  messages,
+} from '@mindweft/db';
 
 export type { Message };
 
@@ -53,6 +60,10 @@ export function insertMessage(
     createdAt: Date.now(),
   };
   db.insert(messages).values(row).run();
+  db.update(conversations)
+    .set({ updatedAt: row.createdAt })
+    .where(eq(conversations.id, conversationId))
+    .run();
   return toStored(row);
 }
 

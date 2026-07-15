@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { ProviderConfig } from '@mindweft/ai';
 
@@ -10,6 +10,7 @@ import { ConversationDrawer } from './ConversationDrawer';
 import { ConversationList } from './ConversationList';
 import { IconRail } from './IconRail';
 import { MessageList } from './MessageList';
+import type { ConversationSummary } from '../store/conversations';
 import { useOnlineStatus } from '../lib/use-online-status';
 import { useChatSession } from '../lib/use-chat-session';
 import styles from '../chat.module.css';
@@ -32,9 +33,59 @@ export function ChatShell({ config }: ChatShellProps) {
       `/chat?conversation=${encodeURIComponent(id)}`,
     );
   };
+
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
+  const loadConversations = useCallback(async () => {
+    const res = await fetch('/api/conversations');
+    if (!res.ok) return;
+    const data = (await res.json()) as {
+      conversations?: ConversationSummary[];
+    };
+    setConversations(data.conversations ?? []);
+  }, []);
+  useEffect(() => {
+    void loadConversations();
+  }, [loadConversations]);
+
+  const createConversationHandler = useCallback(async () => {
+    const res = await fetch('/api/conversations', { method: 'POST' });
+    if (!res.ok) return;
+    const data = (await res.json()) as { conversation: ConversationSummary };
+    selectConversation(data.conversation.id);
+    await loadConversations();
+  }, [loadConversations]);
+
+  const handleCreate = useCallback(() => {
+    void createConversationHandler();
+  }, [createConversationHandler]);
+
+  const renameConversationHandler = useCallback(
+    async (id: string, displayName: string) => {
+      const res = await fetch(`/api/conversations/${id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ displayName }),
+      });
+      if (res.ok) await loadConversations();
+    },
+    [loadConversations],
+  );
+
+  const handleRename = useCallback(
+    (id: string, displayName: string) => {
+      void renameConversationHandler(id, displayName);
+    },
+    [renameConversationHandler],
+  );
+
   const { messages, streaming, send, stop } = useChatSession(
     config,
     conversationId,
+    {
+      onConversationActivity: () => {
+        void loadConversations();
+      },
+    },
   );
   const [drawerOpen, setDrawerOpen] = useState(false);
   const online = useOnlineStatus();
@@ -43,8 +94,11 @@ export function ChatShell({ config }: ChatShellProps) {
     <div className={styles.shell}>
       <IconRail />
       <ConversationList
+        items={conversations}
         currentId={conversationId}
         onSelect={selectConversation}
+        onCreate={handleCreate}
+        onRename={handleRename}
       />
       <main className={styles.main}>
         <ChatHeader
@@ -60,6 +114,7 @@ export function ChatShell({ config }: ChatShellProps) {
         )}
         <MessageList messages={messages} />
         <Composer
+          conversationId={conversationId}
           streaming={streaming}
           onSend={send}
           onStop={stop}
@@ -68,8 +123,11 @@ export function ChatShell({ config }: ChatShellProps) {
       </main>
       <ConversationDrawer
         open={drawerOpen}
+        items={conversations}
         currentId={conversationId}
         onSelect={selectConversation}
+        onCreate={handleCreate}
+        onRename={handleRename}
         onClose={() => {
           setDrawerOpen(false);
         }}

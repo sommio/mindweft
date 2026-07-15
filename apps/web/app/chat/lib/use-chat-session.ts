@@ -21,6 +21,11 @@ export type UseChatSession = {
   stop: () => void;
 };
 
+export type UseChatSessionOptions = {
+  /** 用户消息已持久化后调用：用于刷新对话列表的名称与最近活动排序。 */
+  onConversationActivity?: () => void;
+};
+
 const CHAT_ENDPOINT = '/api/chat';
 
 function newId(): string {
@@ -61,7 +66,9 @@ async function fetchMessages(endpoint: string): Promise<ChatSessionMessage[]> {
 export function useChatSession(
   config: ProviderConfig,
   conversationId: string,
+  options: UseChatSessionOptions = {},
 ): UseChatSession {
+  const { onConversationActivity } = options;
   const [messages, setMessages] = useState<ChatSessionMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -71,6 +78,8 @@ export function useChatSession(
   const interactedRef = useRef<boolean>(false);
   // 单调递增的轮次计数：用于丢弃迟到的 onDone refetch，避免覆盖下一轮乐观状态。
   const turnRef = useRef(0);
+  const activityRef = useRef(onConversationActivity);
+  activityRef.current = onConversationActivity;
 
   // 切换对话时从服务端加载目标对话的全部有序消息。
   // 若用户在冷启动慢加载完成前已发送消息，则丢弃迟到的初始加载结果，避免覆盖乐观状态/错误行。
@@ -147,6 +156,7 @@ export function useChatSession(
             // 从服务端拉取真源，对齐 id/顺序/持久化状态，并清理遗留 incomplete/error 行。
             abortRef.current = null;
             setStreaming(false);
+            activityRef.current?.();
             const turn = turnRef.current;
             void (async () => {
               const synced = await fetchMessages(
@@ -160,6 +170,7 @@ export function useChatSession(
           onError: (code) => {
             // 失败：保留用户消息（已持久化），把 assistant 占位标记为安全错误。
             // 不 refetch，以免丢失错误反馈；刷新后 partial assistant 自然消失。
+            // 用户消息已持久化（含可能的自动命名与 updatedAt 更新），刷新对话列表。
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantId
@@ -169,6 +180,7 @@ export function useChatSession(
             );
             abortRef.current = null;
             setStreaming(false);
+            activityRef.current?.();
           },
         },
         controller.signal,

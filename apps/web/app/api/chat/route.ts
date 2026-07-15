@@ -4,7 +4,10 @@ import { parseChatRequest } from './parse-chat-request';
 import {
   ensureDefaultConversation,
   getConversation,
+  NEW_CONVERSATION_NAME,
+  renameConversation,
 } from '../../chat/store/conversations';
+import { deriveConversationName } from '../../chat/lib/conversation-name';
 import {
   insertAssistantMessage,
   insertUserMessage,
@@ -61,6 +64,10 @@ export async function POST(request: Request): Promise<Response> {
 
   // 绑定唯一默认对话：先持久化用户消息，再读取有序历史作为 Provider 上下文。
   insertUserMessage(conversation.id, parsed.content);
+  // 首条用户消息成功持久化后，若对话仍是默认“新对话”名称，用本地规则生成临时名称。不调用 AI。
+  if (conversation.displayName === NEW_CONVERSATION_NAME) {
+    renameConversation(conversation.id, deriveConversationName(parsed.content));
+  }
   const history: ChatMessage[] = listMessages(conversation.id).map((m) => ({
     role: m.role,
     content: m.content,

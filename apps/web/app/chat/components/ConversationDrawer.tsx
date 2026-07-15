@@ -4,19 +4,26 @@ import { useEffect, useRef } from 'react';
 
 import styles from '../chat.module.css';
 import { ConversationList } from './ConversationList';
+import type { Conversation } from './ConversationList';
 
 export type ConversationDrawerProps = {
   open: boolean;
   onClose: () => void;
-  currentId?: string;
-  onSelect?: (id: string) => void;
+  items: Conversation[];
+  currentId: string;
+  onSelect: (id: string) => void;
+  onCreate: () => void;
+  onRename: (id: string, displayName: string) => void;
 };
 
 export function ConversationDrawer({
   open,
   onClose,
-  currentId = 'default',
-  onSelect = () => undefined,
+  items,
+  currentId,
+  onSelect,
+  onCreate,
+  onRename,
 }: ConversationDrawerProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
@@ -41,11 +48,18 @@ export function ConversationDrawer({
     >
       <div className={styles.drawerContent}>
         <ConversationList
+          items={items}
           currentId={currentId}
           onSelect={(id) => {
             onSelect(id);
             onClose();
           }}
+          onCreate={() => {
+            onCreate();
+            onClose();
+          }}
+          onRename={onRename}
+          onClose={onClose}
         />
       </div>
     </dialog>

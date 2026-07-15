@@ -37,6 +37,12 @@ async function sendByText(page: Page, text: string): Promise<void> {
   await composer.press('Enter');
 }
 
+async function sendByButton(page: Page, text: string): Promise<void> {
+  const composer = page.getByLabel('消息输入');
+  await composer.fill(text);
+  await page.getByRole('button', { name: '发送' }).click();
+}
+
 async function waitForStreamDone(page: Page): Promise<void> {
   // 流式期间输入区 disabled；恢复可用表示流结束并已同步。
   const composer = page.getByLabel('消息输入');
@@ -284,6 +290,157 @@ test.describe('chat desktop', () => {
     await expect(composer).toBeFocused();
     await composer.fill('x');
     await expect(page.getByRole('button', { name: '发送' })).toBeEnabled();
+  });
+});
+
+test.describe('chat multi-conversation desktop', () => {
+  test('isolates messages across conversations', async ({ page }) => {
+    await gotoChat(page);
+    // 创建对话 A 并发送首条消息，触发本地自动命名。
+    await page.getByRole('button', { name: '新建对话' }).click();
+    await expect(
+      page.getByRole('button', { name: '新对话', exact: true }),
+    ).toBeVisible();
+    await sendByText(page, '消息A');
+    await expect(page.getByRole('log').getByText('消息A')).toBeVisible();
+    // 等待侧栏刷新出 A 的自动名称。
+    await expect(
+      page.getByRole('button', { name: '消息A', exact: true }),
+    ).toBeVisible();
+
+    // 创建对话 B 并发送首条消息。
+    await page.getByRole('button', { name: '新建对话' }).click();
+    await expect(
+      page.getByRole('button', { name: '新对话', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('log').getByText('开始和 AI 聊天吧。'),
+    ).toBeVisible();
+    await sendByText(page, '消息B');
+    await expect(page.getByRole('log').getByText('消息B')).toBeVisible();
+
+    // 切回 A：只看到 A 的消息，B 的消息不污染。
+    await page.getByRole('button', { name: '消息A', exact: true }).click();
+    await expect(page.getByRole('log').getByText('消息A')).toBeVisible();
+    await expect(page.getByRole('log').getByText('消息B')).toHaveCount(0);
+
+    // 切到 B：只看到 B 的消息。
+    await page.getByRole('button', { name: '消息B', exact: true }).click();
+    await expect(page.getByRole('log').getByText('消息B')).toBeVisible();
+    await expect(page.getByRole('log').getByText('消息A')).toHaveCount(0);
+  });
+
+  test('renames a conversation inline', async ({ page }) => {
+    await gotoChat(page);
+    await page.getByRole('button', { name: '新建对话' }).click();
+    await expect(
+      page.getByRole('button', { name: '新对话', exact: true }),
+    ).toBeVisible();
+    await sendByText(page, '原主题');
+    await expect(
+      page.getByRole('button', { name: '原主题', exact: true }),
+    ).toBeVisible();
+    // 点击重命名按钮进入内联编辑。
+    await page.getByRole('button', { name: '重命名 原主题' }).click();
+    const input = page.getByLabel('重命名对话');
+    await input.fill('读书笔记');
+    await input.press('Enter');
+    await expect(
+      page.getByRole('button', { name: '读书笔记', exact: true }),
+    ).toBeVisible();
+    // 刷新后名称保持。
+    await page.reload();
+    await expect(
+      page.getByRole('button', { name: '读书笔记', exact: true }),
+    ).toBeVisible();
+  });
+
+  test('drafts are isolated per conversation and restored after reload', async ({
+    page,
+  }) => {
+    await gotoChat(page);
+    const composer = page.getByLabel('消息输入');
+    // 在默认对话输入草稿但不发送。
+    await composer.fill('默认草稿');
+    await expect(composer).toHaveValue('默认草稿');
+    // 新建对话：切到新对话后草稿应为空。
+    await page.getByRole('button', { name: '新建对话' }).click();
+    await expect(
+      page.getByRole('button', { name: '新对话', exact: true }),
+    ).toBeVisible();
+    await expect(composer).toHaveValue('');
+    await composer.fill('新对话草稿');
+    // 刷新：当前对话通过 URL 恢复，草稿从 localStorage 恢复。
+    await page.reload();
+    await expect(page.getByRole('heading', { name: '聊天' })).toBeVisible();
+    await expect(composer).toHaveValue('新对话草稿');
+    // 切回默认对话：草稿恢复，且未写入消息表（空状态仍在）。
+    await page.getByRole('button', { name: '默认对话', exact: true }).click();
+    await expect(composer).toHaveValue('默认草稿');
+    await expect(
+      page.getByRole('log').getByText('开始和 AI 聊天吧。'),
+    ).toBeVisible();
+  });
+});
+
+test.describe('chat mobile iphone-se', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test('menu button visible and drawer has close button', async ({ page }) => {
+    await gotoChat(page);
+    const hamburger = page.getByRole('button', { name: '打开对话列表' });
+    await expect(hamburger).toBeVisible();
+    await hamburger.click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(
+      page.getByRole('complementary', { name: '对话列表' }),
+    ).toBeVisible();
+    // 明确关闭按钮。
+    await page.getByRole('button', { name: '关闭对话列表' }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+  });
+
+  test('create in drawer closes drawer and loads target', async ({ page }) => {
+    await gotoChat(page);
+    await page.getByRole('button', { name: '打开对话列表' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByRole('button', { name: '新建对话' }).click();
+    // 创建后抽屉自动关闭并进入新对话（空状态）。
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(
+      page.getByRole('log').getByText('开始和 AI 聊天吧。'),
+    ).toBeVisible();
+  });
+
+  test('select in drawer closes drawer and loads target conversation', async ({
+    page,
+  }) => {
+    await gotoChat(page);
+    // 先在默认对话发一条消息，使默认对话有内容。手机端 Enter 不发送，用发送按钮。
+    await sendByButton(page, '桌面话题');
+    await expect(page.getByRole('log').getByText('桌面话题')).toBeVisible();
+    await waitForStreamDone(page);
+    // 打开抽屉，新建一个空对话。
+    await page.getByRole('button', { name: '打开对话列表' }).click();
+    await page.getByRole('button', { name: '新建对话' }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(
+      page.getByRole('log').getByText('开始和 AI 聊天吧。'),
+    ).toBeVisible();
+    // 再次打开抽屉，选择默认对话：抽屉关闭并加载默认对话历史。
+    await page.getByRole('button', { name: '打开对话列表' }).click();
+    await page.getByRole('button', { name: '默认对话', exact: true }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(page.getByRole('log').getByText('桌面话题')).toBeVisible();
+  });
+
+  test('mask click closes drawer', async ({ page }) => {
+    await gotoChat(page);
+    await page.getByRole('button', { name: '打开对话列表' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    // 抽屉左对齐 280px，右侧为遮罩。
+    await page.mouse.click(360, 50);
+    await expect(page.getByRole('dialog')).toBeHidden();
   });
 });
 

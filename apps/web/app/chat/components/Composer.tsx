@@ -1,23 +1,29 @@
 'use client';
 
-import { useState } from 'react';
-
 import { computeRows } from '../lib/auto-grow';
 import { shouldSendOnEnter } from '../lib/keyboard';
+import { useDraft } from '../lib/use-draft';
 import { useIsMobile } from '../lib/use-is-mobile';
 import styles from '../chat.module.css';
 
 const MAX_ROWS = 5;
 
 export type ComposerProps = {
+  conversationId: string;
   streaming: boolean;
   onSend: (text: string) => void;
   onStop: () => void;
   online: boolean;
 };
 
-export function Composer({ streaming, onSend, onStop, online }: ComposerProps) {
-  const [value, setValue] = useState('');
+export function Composer({
+  conversationId,
+  streaming,
+  onSend,
+  onStop,
+  online,
+}: ComposerProps) {
+  const [value, setValue, clearValue] = useDraft(conversationId);
   const isMobile = useIsMobile();
   const platform = isMobile ? 'mobile' : 'desktop';
   const rows = computeRows(value, MAX_ROWS);
@@ -26,7 +32,7 @@ export function Composer({ streaming, onSend, onStop, online }: ComposerProps) {
   const submit = () => {
     if (value.trim() === '' || streaming || !online) return;
     onSend(value);
-    setValue('');
+    clearValue();
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {

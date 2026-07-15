@@ -41,9 +41,33 @@
   flex-direction: column;
   gap: 8px;
   padding: 20px 14px;
+  padding-top: calc(20px + env(safe-area-inset-top));
   background: #eef1ec;
   border-right: 1px solid rgba(0, 0, 0, 0.08);
   font-size: 13px;
+  min-height: 0;
+}
+
+.listHeader {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.closeButton {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #6b7770;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .listTitle {
@@ -53,10 +77,19 @@
   letter-spacing: 0.04em;
 }
 
+.convoScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .convoItem {
   display: flex;
   align-items: center;
-  padding: 8px 10px;
+  padding: 4px 6px 4px 0;
   border-radius: 8px;
   cursor: default;
 }
@@ -64,6 +97,79 @@
 .convoItemActive {
   background: #dbe8d8;
   color: #1c2620;
+}
+
+.convoItemSelect {
+  flex: 1 1 auto;
+  display: block;
+  min-width: 0;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.convoRenameButton {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #9aa69e;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.convoRenameButton:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #4a6356;
+}
+
+.convoRenameInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid #4a6356;
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+  color: #1c2620;
+}
+
+.convoRenameSave,
+.convoRenameCancel {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.convoRenameSave {
+  color: #4a6356;
+}
+
+.convoRenameSave:hover {
+  background: rgba(74, 99, 86, 0.12);
+}
+
+.convoRenameCancel {
+  color: #9aa69e;
+}
+
+.convoRenameCancel:hover {
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .main {
@@ -289,15 +395,20 @@
 .drawerContent {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 20px 14px;
+  padding: 0;
   font-size: 13px;
   height: 100%;
 }
 
+.drawerContent > .list {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-right: none;
+}
+
 @media (max-width: 768px) {
-  .rail,
-  .list {
+  .shell > .rail,
+  .shell > .list {
     display: none;
   }
 

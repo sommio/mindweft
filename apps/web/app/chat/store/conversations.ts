@@ -85,3 +85,24 @@ export function createConversation(): ConversationSummary {
   db.insert(conversations).values(row).run();
   return toSummary(row);
 }
+
+/**
+ * 重命名对话。name 必须已通过 normalizeConversationName 规范化（非空、不超长）。
+ * 对话不存在时返回 undefined；调用方据此回 404。
+ */
+export function renameConversation(
+  id: string,
+  name: string,
+): ConversationSummary | undefined {
+  const row = db
+    .select()
+    .from(conversations)
+    .where(eq(conversations.id, id))
+    .get();
+  if (row === undefined) return undefined;
+  db.update(conversations)
+    .set({ displayName: name })
+    .where(eq(conversations.id, id))
+    .run();
+  return toSummary({ ...row, displayName: name });
+}

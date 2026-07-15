@@ -22,7 +22,6 @@ export type UseChatSession = {
 };
 
 const CHAT_ENDPOINT = '/api/chat';
-const MESSAGES_ENDPOINT = '/api/conversations/default/messages';
 
 function newId(): string {
   if (
@@ -41,8 +40,8 @@ type ServerMessage = {
   createdAt: number;
 };
 
-async function fetchMessages(): Promise<ChatSessionMessage[]> {
-  const res = await fetch(MESSAGES_ENDPOINT);
+async function fetchMessages(endpoint: string): Promise<ChatSessionMessage[]> {
+  const res = await fetch(endpoint);
   if (!res.ok) return [];
   const data = (await res.json()) as { messages?: ServerMessage[] };
   const list = Array.isArray(data.messages) ? data.messages : [];
@@ -59,7 +58,10 @@ async function fetchMessages(): Promise<ChatSessionMessage[]> {
  * 完整 AI 消息在流正常结束后持久化。流被中断或失败时，部分 AI 内容
  * 只保留在当前页面（标记 incomplete/error），不写入数据库。
  */
-export function useChatSession(config: ProviderConfig): UseChatSession {
+export function useChatSession(
+  config: ProviderConfig,
+  conversationId: string,
+): UseChatSession {
   const [messages, setMessages] = useState<ChatSessionMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -70,13 +72,16 @@ export function useChatSession(config: ProviderConfig): UseChatSession {
   // 单调递增的轮次计数：用于丢弃迟到的 onDone refetch，避免覆盖下一轮乐观状态。
   const turnRef = useRef(0);
 
-  // mount 时从服务端加载默认对话的全部有序消息。
+  // 切换对话时从服务端加载目标对话的全部有序消息。
   // 若用户在冷启动慢加载完成前已发送消息，则丢弃迟到的初始加载结果，避免覆盖乐观状态/错误行。
   const initialCancelledRef = useRef<boolean>(false);
   useEffect(() => {
     initialCancelledRef.current = false;
+    interactedRef.current = false;
     void (async () => {
-      const loaded = await fetchMessages();
+      const loaded = await fetchMessages(
+        `/api/conversations/${conversationId}/messages`,
+      );
       if (!initialCancelledRef.current && !interactedRef.current) {
         setMessages(loaded);
       }
@@ -84,7 +89,7 @@ export function useChatSession(config: ProviderConfig): UseChatSession {
     return () => {
       initialCancelledRef.current = true;
     };
-  }, []);
+  }, [conversationId]);
 
   // 卸载时中断进行中的流。
   useEffect(() => {
@@ -93,79 +98,84 @@ export function useChatSession(config: ProviderConfig): UseChatSession {
     };
   }, []);
 
-  const send = useCallback((text: string) => {
-    const trimmed = text.trim();
-    if (trimmed === '' || abortRef.current !== null) return;
-    interactedRef.current = true;
-    turnRef.current += 1;
+  const send = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (trimmed === '' || abortRef.current !== null) return;
+      interactedRef.current = true;
+      turnRef.current += 1;
 
-    const userId = newId();
-    const assistantId = newId();
-    assistantIdRef.current = assistantId;
-    const userMessage: ChatSessionMessage = {
-      id: userId,
-      role: 'user',
-      content: trimmed,
-      status: 'done',
-    };
-    const assistantPlaceholder: ChatSessionMessage = {
-      id: assistantId,
-      role: 'assistant',
-      content: '',
-      status: 'streaming',
-    };
+      const userId = newId();
+      const assistantId = newId();
+      assistantIdRef.current = assistantId;
+      const userMessage: ChatSessionMessage = {
+        id: userId,
+        role: 'user',
+        content: trimmed,
+        status: 'done',
+      };
+      const assistantPlaceholder: ChatSessionMessage = {
+        id: assistantId,
+        role: 'assistant',
+        content: '',
+        status: 'streaming',
+      };
 
-    setMessages((prev) => {
-      // 丢弃上一轮遗留的 incomplete/error 行，保留全部 done 消息。
-      const kept = prev.filter((m) => m.status === 'done');
-      return [...kept, userMessage, assistantPlaceholder];
-    });
+      setMessages((prev) => {
+        // 丢弃上一轮遗留的 incomplete/error 行，保留全部 done 消息。
+        const kept = prev.filter((m) => m.status === 'done');
+        return [...kept, userMessage, assistantPlaceholder];
+      });
 
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setStreaming(true);
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setStreaming(true);
 
-    void postStream(
-      CHAT_ENDPOINT,
-      { provider: configRef.current, content: trimmed },
-      {
-        onDelta: (delta) => {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, content: m.content + delta } : m,
-            ),
-          );
+      void postStream(
+        CHAT_ENDPOINT,
+        { provider: configRef.current, content: trimmed, conversationId },
+        {
+          onDelta: (delta) => {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId ? { ...m, content: m.content + delta } : m,
+              ),
+            );
+          },
+          onDone: () => {
+            // 流正常结束：服务端已持久化完整 assistant 消息。
+            // 从服务端拉取真源，对齐 id/顺序/持久化状态，并清理遗留 incomplete/error 行。
+            abortRef.current = null;
+            setStreaming(false);
+            const turn = turnRef.current;
+            void (async () => {
+              const synced = await fetchMessages(
+                `/api/conversations/${conversationId}/messages`,
+              );
+              // 若期间用户又发送了新消息，丢弃这次迟到的同步，避免覆盖新的乐观状态。
+              if (turnRef.current !== turn) return;
+              setMessages(synced);
+            })();
+          },
+          onError: (code) => {
+            // 失败：保留用户消息（已持久化），把 assistant 占位标记为安全错误。
+            // 不 refetch，以免丢失错误反馈；刷新后 partial assistant 自然消失。
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId
+                  ? { ...m, status: 'error', errorCode: code }
+                  : m,
+              ),
+            );
+            abortRef.current = null;
+            setStreaming(false);
+          },
         },
-        onDone: () => {
-          // 流正常结束：服务端已持久化完整 assistant 消息。
-          // 从服务端拉取真源，对齐 id/顺序/持久化状态，并清理遗留 incomplete/error 行。
-          abortRef.current = null;
-          setStreaming(false);
-          const turn = turnRef.current;
-          void (async () => {
-            const synced = await fetchMessages();
-            // 若期间用户又发送了新消息，丢弃这次迟到的同步，避免覆盖新的乐观状态。
-            if (turnRef.current !== turn) return;
-            setMessages(synced);
-          })();
-        },
-        onError: (code) => {
-          // 失败：保留用户消息（已持久化），把 assistant 占位标记为安全错误。
-          // 不 refetch，以免丢失错误反馈；刷新后 partial assistant 自然消失。
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, status: 'error', errorCode: code }
-                : m,
-            ),
-          );
-          abortRef.current = null;
-          setStreaming(false);
-        },
-      },
-      controller.signal,
-    );
-  }, []);
+        controller.signal,
+      );
+    },
+    [conversationId],
+  );
 
   const stop = useCallback(() => {
     const controller = abortRef.current;

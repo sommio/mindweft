@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { ProviderConfig } from '@mindweft/ai';
 
@@ -19,14 +19,33 @@ export type ChatShellProps = {
 };
 
 export function ChatShell({ config }: ChatShellProps) {
-  const { messages, streaming, send, stop } = useChatSession(config);
+  const [conversationId, setConversationId] = useState('default');
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('conversation');
+    if (id) setConversationId(id);
+  }, []);
+  const selectConversation = (id: string) => {
+    setConversationId(id);
+    window.history.replaceState(
+      null,
+      '',
+      `/chat?conversation=${encodeURIComponent(id)}`,
+    );
+  };
+  const { messages, streaming, send, stop } = useChatSession(
+    config,
+    conversationId,
+  );
   const [drawerOpen, setDrawerOpen] = useState(false);
   const online = useOnlineStatus();
 
   return (
     <div className={styles.shell}>
       <IconRail />
-      <ConversationList />
+      <ConversationList
+        currentId={conversationId}
+        onSelect={selectConversation}
+      />
       <main className={styles.main}>
         <ChatHeader
           model={config.model}
@@ -49,6 +68,8 @@ export function ChatShell({ config }: ChatShellProps) {
       </main>
       <ConversationDrawer
         open={drawerOpen}
+        currentId={conversationId}
+        onSelect={selectConversation}
         onClose={() => {
           setDrawerOpen(false);
         }}

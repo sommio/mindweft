@@ -1,7 +1,10 @@
 import { classifyAiError, type ChatMessage, streamChat } from '@mindweft/ai';
 
 import { parseChatRequest } from './parse-chat-request';
-import { ensureDefaultConversation } from '../../chat/store/conversations';
+import {
+  ensureDefaultConversation,
+  getConversation,
+} from '../../chat/store/conversations';
 import {
   insertAssistantMessage,
   insertUserMessage,
@@ -42,8 +45,21 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  const conversationId =
+    typeof body === 'object' &&
+    body !== null &&
+    'conversationId' in body &&
+    typeof body.conversationId === 'string'
+      ? body.conversationId
+      : 'default';
+  const conversation =
+    conversationId === 'default'
+      ? ensureDefaultConversation()
+      : getConversation(conversationId);
+  if (conversation === undefined)
+    return json({ code: 'conversation_not_found' }, 404);
+
   // 绑定唯一默认对话：先持久化用户消息，再读取有序历史作为 Provider 上下文。
-  const conversation = ensureDefaultConversation();
   insertUserMessage(conversation.id, parsed.content);
   const history: ChatMessage[] = listMessages(conversation.id).map((m) => ({
     role: m.role,

@@ -1,7 +1,4 @@
-import { conversations, db, eq } from '@mindweft/db';
-
-import { DEFAULT_CONVERSATION_ID } from '../../../chat/store/conversations';
-import { clearConversationMessages } from '../../../chat/store/messages';
+import { conversations, db } from '@mindweft/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,9 +11,6 @@ export function POST(): Response {
   if (process.env.MINDWEFT_E2E !== '1') {
     return new Response('Not Found', { status: 404 });
   }
-  clearConversationMessages(DEFAULT_CONVERSATION_ID);
-  db.delete(conversations)
-    .where(eq(conversations.id, DEFAULT_CONVERSATION_ID))
-    .run();
+  db.delete(conversations).run();
   return Response.json({ ok: true });
 }

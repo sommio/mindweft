@@ -2,15 +2,22 @@
 
 import { useEffect, useRef } from 'react';
 
-import { cn } from '../lib/cn';
 import styles from '../chat.module.css';
+import { ConversationList } from './ConversationList';
 
 export type ConversationDrawerProps = {
   open: boolean;
   onClose: () => void;
+  currentId?: string;
+  onSelect?: (id: string) => void;
 };
 
-export function ConversationDrawer({ open, onClose }: ConversationDrawerProps) {
+export function ConversationDrawer({
+  open,
+  onClose,
+  currentId = 'default',
+  onSelect = () => undefined,
+}: ConversationDrawerProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -33,10 +40,13 @@ export function ConversationDrawer({ open, onClose }: ConversationDrawerProps) {
       }}
     >
       <div className={styles.drawerContent}>
-        <p className={styles.listTitle}>对话</p>
-        <div className={cn(styles.convoItem, styles.convoItemActive)}>
-          默认对话
-        </div>
+        <ConversationList
+          currentId={currentId}
+          onSelect={(id) => {
+            onSelect(id);
+            onClose();
+          }}
+        />
       </div>
     </dialog>
   );

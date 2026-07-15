@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import { conversations, db, messages, runMigrations } from '@mindweft/db';
+import { conversations, db, eq, messages, runMigrations } from '@mindweft/db';
+import { createConversation, listConversations } from './conversations';
 
 function insertConversation(): string {
   const id = `test-${Math.random().toString(36).slice(2)}`;
@@ -86,5 +87,28 @@ describe('messages schema constraints', () => {
         })
         .run(),
     ).not.toThrow();
+  });
+});
+
+describe('conversation store', () => {
+  beforeAll(() => {
+    runMigrations();
+  });
+
+  afterEach(() => {
+    db.delete(conversations).run();
+  });
+
+  it('creates and lists multiple conversations by recent activity', () => {
+    const first = createConversation();
+    const second = createConversation();
+    db.update(conversations)
+      .set({ updatedAt: Date.now() + 1000 })
+      .where(eq(conversations.id, first.id))
+      .run();
+    expect(listConversations().map((conversation) => conversation.id)).toEqual([
+      first.id,
+      second.id,
+    ]);
   });
 });

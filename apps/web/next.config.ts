@@ -14,7 +14,9 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname, '../..'),
   serverExternalPackages: ['better-sqlite3', 'sqlite-vec'],
-  allowedDevOrigins: ['127.0.0.1', 'localhost'],
+  ...(process.env.NODE_ENV === 'development'
+    ? { allowedDevOrigins: ['*.*.*.*', '*.local'] }
+    : {}),
 };
 
 export default withSerwist(nextConfig);

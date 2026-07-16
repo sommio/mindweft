@@ -98,6 +98,39 @@ function handleCompletions(req, res) {
   });
 }
 
+function handleEmbeddings(req, res) {
+  let raw = '';
+  req.on('data', (data) => {
+    raw += data.toString();
+  });
+  req.on('end', () => {
+    let parsed = {};
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      sendJson(res, 400, { error: { message: 'bad json' } });
+      return;
+    }
+    if (parsed.model === 'error-401' || parsed.model === 'error-500') {
+      sendJson(res, parsed.model === 'error-401' ? 401 : 500, {
+        error: { message: 'stub error' },
+      });
+      return;
+    }
+    const value = String(parsed.input ?? '');
+    const vector = Array.from(
+      { length: 8 },
+      (_, i) => (value.charCodeAt(i) || 0) / 255,
+    );
+    sendJson(res, 200, {
+      object: 'list',
+      data: [{ object: 'embedding', index: 0, embedding: vector }],
+      model: parsed.model,
+      usage: { prompt_tokens: value.length, total_tokens: value.length },
+    });
+  });
+}
+
 const server = createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
     sendJson(res, 200, { ok: true });
@@ -105,6 +138,10 @@ const server = createServer((req, res) => {
   }
   if (req.method === 'POST' && req.url === '/v1/chat/completions') {
     handleCompletions(req, res);
+    return;
+  }
+  if (req.method === 'POST' && req.url === '/v1/embeddings') {
+    handleEmbeddings(req, res);
     return;
   }
   sendJson(res, 404, { error: { message: 'not found' } });

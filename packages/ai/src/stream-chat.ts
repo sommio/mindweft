@@ -20,6 +20,44 @@ export type StreamChatInput = {
   signal?: AbortSignal;
 };
 
+export type GenerateTextInput = {
+  config: ProviderConfig;
+  messages: ChatMessage[];
+};
+
+export async function generateText(input: GenerateTextInput): Promise<string> {
+  const provider = createOpenAI({
+    baseURL: input.config.baseUrl,
+    apiKey: input.config.apiKey,
+  });
+  const result = await import('ai').then(({ generateText: generate }) =>
+    generate({
+      model: provider.chat(input.config.model),
+      messages: input.messages,
+      maxRetries: 0,
+    }),
+  );
+  return result.text;
+}
+
+export type EmbeddingInput = { config: ProviderConfig; value: string };
+
+export async function generateEmbedding(
+  input: EmbeddingInput,
+): Promise<number[]> {
+  const provider = createOpenAI({
+    baseURL: input.config.baseUrl,
+    apiKey: input.config.apiKey,
+  });
+  const { embed } = await import('ai');
+  const result = await embed({
+    model: provider.embedding(input.config.model),
+    value: input.value,
+    maxRetries: 0,
+  });
+  return result.embedding;
+}
+
 /**
  * 调用 OpenAI-compatible Provider 并返回流式文本。
  *

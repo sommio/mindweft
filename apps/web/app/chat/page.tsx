@@ -6,7 +6,7 @@ import { ChatShell } from './components/ChatShell';
 import { useProviderConfig } from '../../lib/use-provider-config';
 
 export default function ChatPage() {
-  const { config, ready } = useProviderConfig();
+  const { config, ready, embeddingConfig } = useProviderConfig();
 
   if (!ready) {
     return (
@@ -28,5 +28,5 @@ export default function ChatPage() {
     );
   }
 
-  return <ChatShell config={config} />;
+  return <ChatShell config={config} embeddingConfig={embeddingConfig} />;
 }

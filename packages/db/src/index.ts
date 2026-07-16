@@ -1,5 +1,5 @@
 export { db, sqlite } from './client';
-export { conversations, health, messages } from './schema';
+export { conversations, health, messages, memoryChunks } from './schema';
 export { runMigrations } from './migrate';
-export type { Conversation, Message } from './schema';
-export { asc, desc, eq } from 'drizzle-orm';
+export type { Conversation, Message, MemoryChunk } from './schema';
+export { and, asc, desc, eq, ne } from 'drizzle-orm';

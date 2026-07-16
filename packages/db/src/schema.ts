@@ -5,6 +5,7 @@ import {
   integer,
   sqliteTable,
   text,
+  uniqueIndex,
 } from 'drizzle-orm/sqlite-core';
 
 export const health = sqliteTable('health', {
@@ -54,5 +55,40 @@ export const messages = sqliteTable(
   ],
 );
 
+export const memoryChunks = sqliteTable(
+  'memory_chunks',
+  {
+    id: text('id').primaryKey(),
+    conversationId: text('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    startMessageId: text('start_message_id').notNull(),
+    endMessageId: text('end_message_id').notNull(),
+    sourceText: text('source_text').notNull(),
+    summary: text('summary'),
+    status: text('status').notNull().default('pending'),
+    errorCode: text('error_code'),
+    profile: text('profile'),
+    embedding: text('embedding'),
+    dimension: integer('dimension'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (table) => [
+    index('memory_chunks_conversation_idx').on(table.conversationId),
+    index('memory_chunks_range_idx').on(
+      table.conversationId,
+      table.startMessageId,
+      table.endMessageId,
+    ),
+    uniqueIndex('memory_chunks_conversation_range_unique').on(
+      table.conversationId,
+      table.startMessageId,
+      table.endMessageId,
+    ),
+  ],
+);
+
 export type Conversation = typeof conversations.$inferSelect;
 export type Message = typeof messages.$inferSelect;
+export type MemoryChunk = typeof memoryChunks.$inferSelect;

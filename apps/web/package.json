@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@mindweft/ai": "workspace:*",
+    "@mindweft/memory": "workspace:*",
     "@mindweft/config": "workspace:*",
     "@mindweft/db": "workspace:*",
     "@serwist/next": "^9.5.11",

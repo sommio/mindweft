@@ -8,7 +8,12 @@ export type ParseChatErrorCode =
   'invalid_body_shape' | 'provider_invalid' | 'message_invalid';
 
 export type ParseChatResult =
-  | { ok: true; provider: ProviderConfig; content: string }
+  | {
+      ok: true;
+      provider: ProviderConfig;
+      embeddingProvider?: ProviderConfig;
+      content: string;
+    }
   | {
       ok: false;
       code: ParseChatErrorCode;
@@ -55,5 +60,20 @@ export function parseChatRequest(body: unknown): ParseChatResult {
     return { ok: false, code: 'message_invalid' };
   }
 
-  return { ok: true, provider: providerValidation.config, content };
+  const embeddingInput = body['embeddingProvider'];
+  let embeddingProvider: ProviderConfig | undefined;
+  if (isObject(embeddingInput)) {
+    const result = validateProviderConfig({
+      baseUrl: asString(embeddingInput['baseUrl']),
+      apiKey: asString(embeddingInput['apiKey']),
+      model: asString(embeddingInput['model']),
+    });
+    if (result.ok) embeddingProvider = result.config;
+  }
+  return {
+    ok: true,
+    provider: providerValidation.config,
+    ...(embeddingProvider ? { embeddingProvider } : {}),
+    content,
+  };
 }

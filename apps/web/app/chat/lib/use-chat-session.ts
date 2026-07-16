@@ -66,6 +66,7 @@ async function fetchMessages(endpoint: string): Promise<ChatSessionMessage[]> {
 export function useChatSession(
   config: ProviderConfig,
   conversationId: string,
+  embeddingConfig: ProviderConfig | null = null,
   options: UseChatSessionOptions = {},
 ): UseChatSession {
   const { onConversationActivity } = options;
@@ -142,7 +143,12 @@ export function useChatSession(
 
       void postStream(
         CHAT_ENDPOINT,
-        { provider: configRef.current, content: trimmed, conversationId },
+        {
+          provider: configRef.current,
+          embeddingProvider: embeddingConfig,
+          content: trimmed,
+          conversationId,
+        },
         {
           onDelta: (delta) => {
             setMessages((prev) =>

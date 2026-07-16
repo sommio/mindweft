@@ -38,10 +38,21 @@ function emptyErrors(): FieldErrors {
 }
 
 export default function ProviderSettingsPage() {
-  const { config, ready, save, clear } = useProviderConfig();
+  const {
+    config,
+    ready,
+    save,
+    clear,
+    embeddingConfig,
+    saveEmbedding,
+    clearEmbedding,
+  } = useProviderConfig();
   const [baseUrl, setBaseUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('');
+  const [embeddingBaseUrl, setEmbeddingBaseUrl] = useState('');
+  const [embeddingApiKey, setEmbeddingApiKey] = useState('');
+  const [embeddingModel, setEmbeddingModel] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>(emptyErrors());
   const [saved, setSaved] = useState(false);
@@ -59,6 +70,11 @@ export default function ProviderSettingsPage() {
       setBaseUrl(config.baseUrl);
       setApiKey(config.apiKey);
       setModel(config.model);
+    }
+    if (embeddingConfig) {
+      setEmbeddingBaseUrl(embeddingConfig.baseUrl);
+      setEmbeddingApiKey(embeddingConfig.apiKey);
+      setEmbeddingModel(embeddingConfig.model);
     }
   }, [ready, config]);
 
@@ -89,6 +105,16 @@ export default function ProviderSettingsPage() {
     setModel('');
     setErrors(emptyErrors());
     setSaved(false);
+  }
+
+  function handleEmbeddingSubmit(event: SyntheticEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const result = validateProviderConfig({
+      baseUrl: embeddingBaseUrl,
+      apiKey: embeddingApiKey,
+      model: embeddingModel,
+    });
+    if (result.ok) saveEmbedding(result.config);
   }
 
   return (
@@ -189,6 +215,56 @@ export default function ProviderSettingsPage() {
             已保存。配置仅保存在本浏览器。<Link href="/chat">返回聊天</Link>。
           </p>
         ) : null}
+      </form>
+      <h2>Embedding Provider</h2>
+      <form
+        onSubmit={handleEmbeddingSubmit}
+        noValidate
+        data-embedding-mounted={mounted}
+      >
+        <label htmlFor="embedding-base-url">Memory Provider URL</label>
+        <input
+          id="embedding-base-url"
+          value={embeddingBaseUrl}
+          onChange={(e) => {
+            setEmbeddingBaseUrl(e.target.value);
+          }}
+          autoComplete="off"
+        />
+        <label htmlFor="embedding-api-key">Memory Provider Key</label>
+        <input
+          id="embedding-api-key"
+          type="password"
+          value={embeddingApiKey}
+          onChange={(e) => {
+            setEmbeddingApiKey(e.target.value);
+          }}
+          autoComplete="off"
+        />
+        <label htmlFor="embedding-model">Memory Embedding Identifier</label>
+        <input
+          id="embedding-model"
+          value={embeddingModel}
+          onChange={(e) => {
+            setEmbeddingModel(e.target.value);
+          }}
+          autoComplete="off"
+        />
+        <button type="submit" disabled={!mounted}>
+          存储 Embedding 配置
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            clearEmbedding();
+            setEmbeddingBaseUrl('');
+            setEmbeddingApiKey('');
+            setEmbeddingModel('');
+          }}
+          disabled={!mounted}
+        >
+          清除 Embedding 配置
+        </button>
       </form>
     </main>
   );

@@ -17,9 +17,10 @@ import styles from '../chat.module.css';
 
 export type ChatShellProps = {
   config: ProviderConfig;
+  embeddingConfig?: ProviderConfig | null;
 };
 
-export function ChatShell({ config }: ChatShellProps) {
+export function ChatShell({ config, embeddingConfig = null }: ChatShellProps) {
   const [conversationId, setConversationId] = useState('default');
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('conversation');
@@ -81,6 +82,7 @@ export function ChatShell({ config }: ChatShellProps) {
   const { messages, streaming, send, stop } = useChatSession(
     config,
     conversationId,
+    embeddingConfig,
     {
       onConversationActivity: () => {
         void loadConversations();
